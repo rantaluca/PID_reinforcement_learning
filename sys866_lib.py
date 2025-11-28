@@ -1,42 +1,69 @@
 import numpy as np
 import math
 import time
-class PID:
+import matlab.engine
+import numpy as np
+
+class SimulinkInstance:
     """
-    Classe du PID continu simple.
+    Classe pour gérer une instance Simulink.
     """
-    def __init__(self, Kp, Ki, Kd):
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
-        self.integral = 0.0
-        self.prev_error = 0.0
+    SIGNAL_MAP = {
+        'consigne': 1,  
+        'error': 2,
+        'command': 3,
+        'output': 4
+    }
+    def __init__(self, sim_name, pid_block, init_Kp, init_Ki, init_Kd, dt_sim=0.01):
+        self.sim_name = sim_name
+        self.pid_block = pid_block
+        self.dt_sim = dt_sim
 
-    def set_parameters(self, Kp, Ki, Kd):
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
+        # Connection au moteur MATLAB
+        self.eng = matlab.engine.start_matlab()
+        print(f"MATLAB Engine démarré. Chargement du modèle {self.sim_name}.slx...")
+        self.eng.load_system(self.model_name)
+        print(f"Modèle {sim_name}.slx chargé.")
+        self.set_pid_params(Kp=init_Kp, Ki=init_Ki, Kd=init_Kd)
 
-    def reset(self):
-        self.integral = 0.0
-        self.prev_error = 0.0
+        # Configuration de la simulation
+        self.eng.set_param(self.sim_name, 'SimulationMode', 'Normal', nargout=0)  # Mode normal
+        self.eng.set_param(self.sim_name, 'StopTime', 'inf', nargout=0) # Simulation infinie
+        self.eng.set_param(self.sim_name, 'FixedStep', str(self.dt_sim), nargout=0) # Pas fixe
 
-    def control(self, error, dt):
-        # intégrale de l'erreur
-        self.integral += error * dt
-        
-        # approximation de la dérivée
-        derivative = (error - self.prev_error) / dt
+    def set_pid_params(self, Kp, Ki, Kd):
+        """
+        Met à jour les paramètres du PID dans le modèle Simulink.
+        """
+        self.eng.set_param(f"{self.sim_name}/{self.pid_block}", 'P', str(Kp), nargout=0)
+        self.eng.set_param(f"{self.sim_name}/{self.pid_block}", 'I', str(Ki), nargout=0)
+        self.eng.set_param(f"{self.sim_name}/{self.pid_block}", 'D', str(Kd), nargout=0)
+        print(f"Paramètres PID mis à jour: Kp={Kp}, Ki={Ki}, Kd={Kd}")
 
-        # Sortie du PID
-        u = (
-            self.Kp * error +
-            self.Ki * self.integral +
-            self.Kd * derivative
-        )
-        self.prev_error = error
-        return u
+    def get_pid_params(self):
+        """
+        Récupère les paramètres actuels du PID depuis le modèle Simulink.
+        """
+        Kp = float(self.eng.get_param(f"{self.sim_name}/{self.pid_block}", 'P'))
+        Ki = float(self.eng.get_param(f"{self.sim_name}/{self.pid_block}", 'I'))
+        Kd = float(self.eng.get_param(f"{self.sim_name}/{self.pid_block}", 'D'))
+        return Kp, Ki, Kd
     
+    # step (# avance la simulation d'un pas de temps)
+
+    # save_state (sauvegarde l'état courant en le retournant, pour qu'on puisse branch sur plusieurs simulations à partir d'un instant)
+
+    # get observation # (récupère les observations courantes de la simulation)
+
+    
+    
+    def close(self):
+        """
+        Ferme l'instance Simulink.
+        """
+        self.eng.quit()
+        print("MATLAB Engine fermé.")   
+
 class Policy:
     """
     Template de politique
@@ -77,7 +104,7 @@ class Policy:
 
     def next_action(self, observation):
         return None
-
+        # return Kp, Ki, Kd
 
 
 class EpisodeLoop:
@@ -121,43 +148,3 @@ class EpisodeLoop:
                 self.pid.set_parameters(*new_parameters)
             
             time.sleep(max(0.0, dt - (time.time() - start_time)))
-
-
-class EpisodeLoopPendulum(EpisodeLoop):
-    """
-    Classe pour gérer une boucle d'épisode spécifique au Pendulum.
-    """
-    def __init__(self, env, consigne, policy, pid, max_steps=1000):
-        super().__init__(env, consigne, policy, pid, max_steps)  
-        
-    
-    def run(self):
-        obs, info = self.env.reset()
-        self.pid.reset()
-        dt = self.policy.dt
-
-        for step in range(self.max_steps):
-            start_time = time.time()
-
-
-            # propre à Pendulum-v1 
-            cos_t, sin_t, theta_dot = obs
-            theta = math.atan2(sin_t, cos_t)
-
-            # erreur de position
-            error = self.policy.consigne - theta
-
-            #Calcul de l'action via le PID
-            u = self.pid.control(error, dt)
-
-            # On applique la sortie du PID à l'environnement
-            obs, reward, terminated, truncated, info = self.env.step(np.array([u], dtype=np.float32))
-
-            # Calcul de la loss (pour logging/entrainement)
-            new_parameters = self.policy.next_action(theta)
-            if new_parameters is not None:
-                #Mise à jour des paramètres du PID
-                self.pid.set_parameters(*new_parameters)
-            print(f"Step: {step}, Angle: {theta:.4f}, Action: {u:.4f}, Error: {error:.4f}")
-
-            time.sleep(max(0.0, dt - (time.time() - start_time))) #sleep to maintain dt
