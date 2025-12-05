@@ -2,18 +2,11 @@ import numpy as np
 import math
 import time
 import matlab.engine
-import numpy as np
-
+import os
 class SimulinkInstance:
     """
     Classe pour gérer une instance Simulink.
     """
-    SIGNAL_MAP = {
-        'consigne': 1,  
-        'error': 2,
-        'command': 3,
-        'output': 4
-    }
     def __init__(self, sim_name, pid_block, init_Kp, init_Ki, init_Kd, dt_sim=0.01):
         self.sim_name = sim_name
         self.pid_block = pid_block
@@ -35,11 +28,11 @@ class SimulinkInstance:
 
         self.eng.set_param(self.sim_name, 'SimulationMode', 'Normal', nargout=0)  # Mode normal
         self.eng.set_param(self.sim_name, 'StopTime', 'inf', nargout=0) # Simulation infinie
-        self.eng.set_param(self.sim_name, 'FixedStep', str(self.dt_sim), nargout=0) # Pas fixe
 
 
-
-        self.eng.set_param(self.sim_name, 'SimulationCommand', 'start', nargout=0)
+        self.eng.set_param(self.sim_name, 'SolverType', 'Fixed-step', nargout=0)
+        self.eng.set_param(self.sim_name, 'Solver', 'ode4', nargout=0)
+        self.eng.set_param(self.sim_name, 'FixedStep', str(self.dt_sim), nargout=0)
 
     def set_pid_params(self, Kp, Ki, Kd):
         """
@@ -62,21 +55,19 @@ class SimulinkInstance:
     # get observation # (récupère les observations courantes de la simulation) 
     def get_observation(self):
         """
-        Lit le vecteur [Consigne, Error, Command, Output] directement
-        depuis l'entrée du bloc 'Sensors'.
+        Lit la derniere ligne dans logs.csv
         """
-
-        cmd = f"get_param('{self.sim_name}/Sensors', 'RuntimeObject').OutputPort(1).Data"
-
-        try:
-            res = self.eng.eval(cmd)
-            data = np.array(res).flatten()
-            return data
-
-        except Exception as e:
-            print(f"Erreur lecture capteurs (attente init...): {e}")
-            return np.array([0.0, 0.0, 0.0, 0.0])
-
+        # use os to read the last line of logs.csv, separated by commas
+        with open('logs.csv', 'r') as f:
+            lines = f.readlines()
+            last_line = lines[-1]
+            values = last_line.strip().split(',')   
+        consigne = float(values[0])
+        error = float(values[1])
+        command = float(values[2])
+        output = float(values[3])
+        observation = (consigne, error, command, output)
+        return observation
         
     def step(self):
         """Step la simulation d'un pas de temps"""
@@ -104,7 +95,7 @@ class Policy:
     Template de politique
     """
 
-    def __init__(self, consigne, consigne_tresh=0.97, loss_params={'error':1.0, 'dep':0.5, 'conv':0.3}, dt=0.1):
+    def __init__(self, consigne=None, consigne_tresh=0.97, loss_params={'error':1.0, 'dep':0.5, 'conv':0.3}, dt=0.1):
         self.convergence_time = 0.0 
         self.running_loss = 0.0
         self.current_loss = 0.0
@@ -114,11 +105,15 @@ class Policy:
         self.dt = dt
     
     def compute_loss(self, observation):
+        print("Observation reçue pour calcul de la loss:", observation)
         # calcul de l'erreur
-        error = self.consigne - observation[0]
+        error = observation[1]
+        sortie = observation[3]
+        if self.consigne is None:
+            self.consigne = observation[0]
         
         # calcul de l'overshoot
-        overshoot = max(0.0, observation[0] - self.consigne)
+        overshoot = max(0.0, sortie - self.consigne)
         
         # verification si la consigne dans le treshhold
         if abs(error) < self.consigne * (1.0 - self.consigne_tresh):
@@ -141,17 +136,112 @@ class Policy:
         return None
         # return Kp, Ki, Kd
 
+import matplotlib.pyplot as plt
+from collections import deque
+
+class RealTimePlotter:
+    """
+    Gère une figure matplotlib en temps réel 
+    """
+    def __init__(self, max_points=500):
+        plt.ion()  # mode interactif
+
+        self.max_points = max_points
+        self.times = deque(maxlen=max_points)
+        self.consigne_hist = deque(maxlen=max_points)
+        self.error_hist = deque(maxlen=max_points)
+        self.command_hist = deque(maxlen=max_points)
+        self.output_hist = deque(maxlen=max_points)
+
+        self.fig, self.ax = plt.subplots()
+        self.line_consigne, = self.ax.plot([], [], label="Consigne")
+        self.line_error, = self.ax.plot([], [], label="Erreur")
+        self.line_command, = self.ax.plot([], [], label="Commande")
+        self.line_output, = self.ax.plot([], [], label="Sortie")
+
+        self.ax.legend()
+        self.ax.set_title("Évolution de la sortie du système en Temps Réel")
+        self.ax.set_xlabel("Temps (s)")
+        self.ax.set_ylabel("Valeurs")
+        self.ax.grid(True)
+
+    def update(self, t, obs):
+        """
+        Met à jour les courbes en temps réel.
+        """
+        self.times.append(t)
+        self.consigne_hist.append(obs[0])
+        self.error_hist.append(obs[1])
+        self.command_hist.append(obs[2])
+        self.output_hist.append(obs[3])
+
+        self.line_consigne.set_data(self.times, self.consigne_hist)
+        self.line_error.set_data(self.times, self.error_hist)
+        self.line_command.set_data(self.times, self.command_hist)
+        self.line_output.set_data(self.times, self.output_hist)
+
+        self.ax.relim()
+        self.ax.autoscale_view()
+
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+
+class LossPlotter:
+    """
+    Gère une figure matplotlib pour la loss en temps réel 
+    """
+    def __init__(self, max_points=500):
+        plt.ion()  # mode interactif
+
+        self.max_points = max_points
+        self.times = deque(maxlen=max_points)
+        self.current_loss_hist = deque(maxlen=max_points)
+        self.running_loss_hist = deque(maxlen=max_points)
+
+        self.fig, self.ax = plt.subplots()
+        self.line_current_loss, = self.ax.plot([], [], label="Perte Courante")
+        self.line_running_loss, = self.ax.plot([], [], label="Perte Totale")
+
+        self.ax.legend()
+        self.ax.set_title("Évolution de la Loss en Temps Réel")
+        self.ax.set_xlabel("Temps (s)")
+        self.ax.set_ylabel("Loss")
+        self.ax.grid(True)
+
+    def update(self, t, current_loss, running_loss = None):
+        """
+        Met à jour les courbes de loss en temps réel.
+        """
+        self.times.append(t)
+        self.current_loss_hist.append(current_loss)
+        self.running_loss_hist.append(running_loss)
+
+        self.line_current_loss.set_data(self.times, self.current_loss_hist)
+        if running_loss is not None:
+            self.line_running_loss.set_data(self.times, self.running_loss_hist)
+
+        self.ax.relim()
+        self.ax.autoscale_view()
+
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
 
 class EpisodeLoop:
     """
     Classe pour gérer une boucle d'épisode.
     """
-    def __init__(self, env, consigne, policy, max_steps=1000, policy_dt=0.1):
+    def __init__(self, env, consigne, policy, max_steps=1000, policy_dt=0.1, plot=True):
         self.env = env
         self.consigne = consigne  
         self.policy = policy
         self.max_steps = max_steps
         self.policy_dt = policy_dt
+        if plot:
+            self.plotter = RealTimePlotter()
+            self.loss_plotter = LossPlotter()
+        else:
+            self.plotter = None
+            self.loss_plotter = None
 
     def run_episode(self):
         """
@@ -159,6 +249,19 @@ class EpisodeLoop:
         """
         # Démarre la simulation
         #self.env.start_sim(total_time=self.sim_total_time)
+
+        # sauavegarde l'ancien logs.csv dans experience du date et heure
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        policy_name = self.policy.__class__.__name__
+        # créer le dossier experiences 
+        os.makedirs("experiences", exist_ok=True)
+
+        # archiver l'ancien csv
+        if os.path.isfile('logs.csv'):
+            os.rename('logs.csv', f'experiences/logs_{timestamp}_{policy_name}.csv')
+
+        self.env.eng.set_param(self.env.sim_name, 'SimulationCommand', 'start', nargout=0)
+        self.env.eng.set_param(self.env.sim_name, 'SimulationCommand', 'pause', nargout=0)
         for step in range(self.max_steps):
             # Récupérer l'observation actuelle et le temps de simulation
             observation, info = self.env.step()
@@ -166,7 +269,13 @@ class EpisodeLoop:
 
             # Calcul de la perte
             current_loss, running_loss = self.policy.compute_loss(observation)
-            print(f"Temps: {sim_time:.2f}s, Observation: {observation}, Perte courante: {current_loss:.4f}, Perte totale: {running_loss:.4f}")
+            if self.loss_plotter is not None:
+                self.loss_plotter.update(sim_time, current_loss, None)
+            else:
+                print(f"Temps: {sim_time:.2f}s, Observation: {observation}, Perte courante: {current_loss:.4f}, Perte totale: {running_loss:.4f}")
+
+            if self.plotter is not None:
+                self.plotter.update(sim_time, observation)
 
             # Obtenir la prochaine action tout les policy_dt
             if step % int(self.policy_dt / self.env.dt_sim) == 0:
