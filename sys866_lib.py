@@ -160,6 +160,7 @@ class RealTimePlotter:
         self.line_output, = self.ax.plot([], [], label="Sortie")
 
         self.ax.legend()
+        self.ax.set_title("Évolution de la sortie du système en Temps Réel")
         self.ax.set_xlabel("Temps (s)")
         self.ax.set_ylabel("Valeurs")
         self.ax.grid(True)
@@ -202,11 +203,12 @@ class LossPlotter:
         self.line_running_loss, = self.ax.plot([], [], label="Perte Totale")
 
         self.ax.legend()
+        self.ax.set_title("Évolution de la Loss en Temps Réel")
         self.ax.set_xlabel("Temps (s)")
         self.ax.set_ylabel("Loss")
         self.ax.grid(True)
 
-    def update(self, t, current_loss, running_loss):
+    def update(self, t, current_loss, running_loss = None):
         """
         Met à jour les courbes de loss en temps réel.
         """
@@ -215,7 +217,8 @@ class LossPlotter:
         self.running_loss_hist.append(running_loss)
 
         self.line_current_loss.set_data(self.times, self.current_loss_hist)
-        self.line_running_loss.set_data(self.times, self.running_loss_hist)
+        if running_loss is not None:
+            self.line_running_loss.set_data(self.times, self.running_loss_hist)
 
         self.ax.relim()
         self.ax.autoscale_view()
@@ -267,7 +270,7 @@ class EpisodeLoop:
             # Calcul de la perte
             current_loss, running_loss = self.policy.compute_loss(observation)
             if self.loss_plotter is not None:
-                self.loss_plotter.update(sim_time, current_loss, running_loss)
+                self.loss_plotter.update(sim_time, current_loss, None)
             else:
                 print(f"Temps: {sim_time:.2f}s, Observation: {observation}, Perte courante: {current_loss:.4f}, Perte totale: {running_loss:.4f}")
 
