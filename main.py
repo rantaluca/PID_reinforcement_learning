@@ -12,7 +12,7 @@ instance = ps.SimulinkInstance(
 policy = ps.Policy(
     consigne=10.0,
     consigne_tresh=0.97,
-    loss_params={'error':1.0, 'dep':0.5, 'conv':0.3},
+    loss_params={'error':5.0, 'dep':0.5, 'conv':0.3},
     dt=0.1 
 )
 

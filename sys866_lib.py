@@ -104,7 +104,7 @@ class Policy:
     Template de politique
     """
 
-    def __init__(self, consigne, consigne_tresh=0.97, loss_params={'error':1.0, 'dep':0.5, 'conv':0.3}, dt=0.1):
+    def __init__(self, consigne=None, consigne_tresh=0.97, loss_params={'error':1.0, 'dep':0.5, 'conv':0.3}, dt=0.1):
         self.convergence_time = 0.0 
         self.running_loss = 0.0
         self.current_loss = 0.0
@@ -114,11 +114,15 @@ class Policy:
         self.dt = dt
     
     def compute_loss(self, observation):
+        print("Observation reçue pour calcul de la loss:", observation)
         # calcul de l'erreur
-        error = self.consigne - observation[0]
+        error = observation[1]
+        sortie = observation[3]
+        if self.consigne is None:
+            self.consigne = observation[0]
         
         # calcul de l'overshoot
-        overshoot = max(0.0, observation[0] - self.consigne)
+        overshoot = max(0.0, sortie - self.consigne)
         
         # verification si la consigne dans le treshhold
         if abs(error) < self.consigne * (1.0 - self.consigne_tresh):
