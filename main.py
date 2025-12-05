@@ -1,0 +1,27 @@
+import sys866_lib as ps
+
+instance = ps.SimulinkInstance(
+    sim_name='sys866_sim',
+    pid_block='sys866_pid',
+    init_Kp=1.0,
+    init_Ki=0.5,
+    init_Kd=0.1,
+    dt_sim=0.01
+)
+
+policy = ps.Policy(
+    consigne=10.0,
+    consigne_tresh=0.97,
+    loss_params={'error':1.0, 'dep':0.5, 'conv':0.3},
+    dt=0.1 
+)
+
+episode_loop = ps.EpisodeLoop(
+    env=instance,
+    consigne=10.0,
+    policy=policy,
+    max_steps=1000,
+    policy_dt=0.1
+)
+episode_loop.run_episode()
+instance.close()

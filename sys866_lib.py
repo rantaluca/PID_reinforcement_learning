@@ -18,18 +18,28 @@ class SimulinkInstance:
         self.sim_name = sim_name
         self.pid_block = pid_block
         self.dt_sim = dt_sim
+        self.current_time = 0.0
 
         # Connection au moteur MATLAB
         self.eng = matlab.engine.start_matlab()
         print(f"MATLAB Engine démarré. Chargement du modèle {self.sim_name}.slx...")
-        self.eng.load_system(self.model_name)
-        print(f"Modèle {sim_name}.slx chargé.")
+
+        self.eng.load_system(self.sim_name)
+        print(f"Modèle {self.sim_name}.slx chargé.")
+
         self.set_pid_params(Kp=init_Kp, Ki=init_Ki, Kd=init_Kd)
 
-        # Configuration de la simulation
+        # Configuration de la simulatio
+
+        self.eng.set_param(self.sim_name, 'BlockReduction', 'off', nargout=0)
+
         self.eng.set_param(self.sim_name, 'SimulationMode', 'Normal', nargout=0)  # Mode normal
         self.eng.set_param(self.sim_name, 'StopTime', 'inf', nargout=0) # Simulation infinie
         self.eng.set_param(self.sim_name, 'FixedStep', str(self.dt_sim), nargout=0) # Pas fixe
+
+
+
+        self.eng.set_param(self.sim_name, 'SimulationCommand', 'start', nargout=0)
 
     def set_pid_params(self, Kp, Ki, Kd):
         """
@@ -49,18 +59,43 @@ class SimulinkInstance:
         Kd = float(self.eng.get_param(f"{self.sim_name}/{self.pid_block}", 'D'))
         return Kp, Ki, Kd
     
-    # step (# avance la simulation d'un pas de temps)
+    # get observation # (récupère les observations courantes de la simulation) 
+    def get_observation(self):
+        """
+        Lit le vecteur [Consigne, Error, Command, Output] directement
+        depuis l'entrée du bloc 'Sensors'.
+        """
 
-    # save_state (sauvegarde l'état courant en le retournant, pour qu'on puisse branch sur plusieurs simulations à partir d'un instant)
+        cmd = f"get_param('{self.sim_name}/Sensors', 'RuntimeObject').OutputPort(1).Data"
 
-    # get observation # (récupère les observations courantes de la simulation)
+        try:
+            res = self.eng.eval(cmd)
+            data = np.array(res).flatten()
+            return data
 
+        except Exception as e:
+            print(f"Erreur lecture capteurs (attente init...): {e}")
+            return np.array([0.0, 0.0, 0.0, 0.0])
+
+        
+    def step(self):
+        """Step la simulation d'un pas de temps"""
+        self.eng.set_param(self.sim_name, 'SimulationCommand', 'step', nargout=0)
+        obs = self.get_observation()
+        return obs, {}
     
-    
+    def get_sim_time(self):
+        """
+        Récupère le temps de simulation actuel.
+        """
+        sim_time = float(self.eng.get_param(self.sim_name, 'SimulationTime'))
+        return sim_time
+
     def close(self):
         """
         Ferme l'instance Simulink.
         """
+        self.eng.set_param(self.sim_name, 'SimulationCommand', 'stop', nargout=0)
         self.eng.quit()
         print("MATLAB Engine fermé.")   
 
@@ -111,40 +146,31 @@ class EpisodeLoop:
     """
     Classe pour gérer une boucle d'épisode.
     """
-    def __init__(self, env, consigne, policy, pid, max_steps=1000):
+    def __init__(self, env, consigne, policy, max_steps=1000, policy_dt=0.1):
         self.env = env
         self.consigne = consigne  
         self.policy = policy
         self.max_steps = max_steps
-        self.pid = pid
+        self.policy_dt = policy_dt
 
-    # exemple de boucle d'épisode générique
-    def run(self):
-        observation, info = self.env.reset()
-        self.pid.reset()
-        dt = self.policy.dt
-
+    def run_episode(self):
+        """
+        Exécute une boucle d'épisode.
+        """
+        # Démarre la simulation
+        #self.env.start_sim(total_time=self.sim_total_time)
         for step in range(self.max_steps):
-
-            # calcul entre deux steps
-            start_time = time.time()
-
-            
-            #calcul de l'erreur
-            error = self.consigne - observation[0]
-
-            #Calcul de l'action via le PID
-            action = self.pid.control(error,  dt)
-            
-            self.env.set_action(action)
-
-            # nouvelle action via le PID
+            # Récupérer l'observation actuelle et le temps de simulation
             observation, info = self.env.step()
+            sim_time = self.env.get_sim_time()
 
-            #Calcul des nouveaux paramètres du PID via la politique
-            new_parameters = self.policy.next_action(observation,  dt)
-            if new_parameters is not None:
-                #Mise à jour des paramètres du PID
-                self.pid.set_parameters(*new_parameters)
-            
-            time.sleep(max(0.0, dt - (time.time() - start_time)))
+            # Calcul de la perte
+            current_loss, running_loss = self.policy.compute_loss(observation)
+            print(f"Temps: {sim_time:.2f}s, Observation: {observation}, Perte courante: {current_loss:.4f}, Perte totale: {running_loss:.4f}")
+
+            # Obtenir la prochaine action tout les policy_dt
+            if step % int(self.policy_dt / self.env.dt_sim) == 0:
+                action = self.policy.next_action(observation)
+                if action is not None:
+                    Kp, Ki, Kd = action
+                    self.env.set_pid_params(Kp, Ki, Kd)
