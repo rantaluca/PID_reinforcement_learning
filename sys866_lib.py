@@ -127,7 +127,7 @@ class Policy:
         self.current_loss = (
             self.loss_params['error'] * error_norm^2 +
             self.loss_params['dep'] * overshoot_norm^2 +
-            self.loss_params['conv'] * conv_norm^2)
+            self.loss_params['conv'] * conv_norm)
         
         self.running_loss += self.current_loss
 
