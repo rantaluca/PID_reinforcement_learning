@@ -105,27 +105,34 @@ class Policy:
         self.dt = dt
     
     def compute_loss(self, observation):
-        print("Observation reçue pour calcul de la loss:", observation)
-        # calcul de l'erreur
+
+        # Calcul de l'erreur statique
+
         error = observation[1]
         sortie = observation[3]
         if self.consigne is None:
             self.consigne = observation[0]
-        
-        # calcul de l'overshoot
-        overshoot = max(0.0, sortie - self.consigne)
-        
-        # verification si la consigne dans le treshhold
-        if abs(error) < self.consigne * (1.0 - self.consigne_tresh):
-            self.convergence_time += self.dt
-        else:
-            self.convergence_time = 0.0
 
-        # calcul de la loss 
+
+        error_norm = error / self.consigne
+
+        # Calcul de l'overshoot
+
+        overshoot = max(0.0, sortie - self.consigne)
+        overshoot_norm = overshoot / self.consigne
+
+        # Calcul de l'indicateur de non-convergence
+
+        if (abs(error) >= self.consigne * (1.0 - self.consigne_tresh)):
+            conv_norm = 1.0
+        else:
+            conv_norm = 0.0
+
+        # Calcul de la fonction de coût 
         self.current_loss = (
-            self.loss_params['error'] * abs(error) +
-            self.loss_params['dep'] * overshoot +
-            self.loss_params['conv'] * self.convergence_time)
+            self.loss_params['error'] * error_norm**2 +
+            self.loss_params['dep'] * overshoot_norm**2 +
+            self.loss_params['conv'] * conv_norm)
         
         self.running_loss += self.current_loss
 
