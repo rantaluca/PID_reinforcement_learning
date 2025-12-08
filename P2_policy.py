@@ -30,3 +30,55 @@ class P2Policy(lib.Policy):
                 self.prev_error = 0
                 self.Integral_ref= Integral_ref
                 
+
+    
+    def compute_features(self, observation):
+
+        ## Calcul des features pour la VFA (phi)
+
+        #1 Le biais vaut 1
+
+        bias = 1.0
+
+
+        
+
+        #789 Gains normalisés
+
+        Kp_norm = self.Kp / self.Kp_ref
+        Ki_norm = self.Ki / self.Ki_ref
+        Kd_norm = self.Kd / self.Kd_ref
+
+        phi = np.array(
+            Kp_norm,
+            Ki_norm,
+            Kd_norm
+        ], dtype=float)
+
+        #On garde l'erreur actuelle pour le prochain step
+
+        self.prev_error = error
+
+        return phi
+    
+
+
+
+
+    def update_value_function(self, phi_next):
+        
+        
+        self.last_phi = phi.copy()
+        
+
+
+    
+  
+
+
+
+    #def next_action(self, observation):
+
+        # Ici c'est à creuser vu que mon entrainement a 2 phases :
+        ## Phase 1 : echauffement des poids avec P2 (donc indépendamment des actions du dessus)
+        ## Phase 2 : 
