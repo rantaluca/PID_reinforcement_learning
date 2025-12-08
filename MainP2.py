@@ -1,5 +1,5 @@
 import sys866_lib as ps
-import P2_policy as p2
+
 
 instance = ps.SimulinkInstance(
     sim_name='Simulation_SYS866',
@@ -12,14 +12,14 @@ instance = ps.SimulinkInstance(
     pre_script='Projet_SYS866'
 )
 
-policy = p2.Policy(
+policy = ps.Policy(
     consigne=None,
     consigne_tresh=0.97,
     loss_params={'error':5.0, 'dep':0.5, 'conv':0.3},
     dt=0.1 
 )
 
-episode_loop = p2.EpisodeLoop(
+episode_loop = ps.EpisodeLoop(
     env=instance,
     consigne=None,
     policy=policy,
