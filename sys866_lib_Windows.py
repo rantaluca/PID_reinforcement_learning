@@ -4,6 +4,10 @@ import time
 import matlab.engine
 import os
 
+
+LOG_DIR = r"C:\temp"   
+LOG_FILE = os.path.join(LOG_DIR, "logs.csv")
+
 class SimulinkInstance:
     """
     Classe pour gérer une instance Simulink.
@@ -34,7 +38,7 @@ class SimulinkInstance:
 
         self.eng.set_param(self.sim_name, 'BlockReduction', 'off', nargout=0)
         self.eng.set_param(self.sim_name, 'SimulationMode', 'Normal', nargout=0)  # Mode normal
-        self.eng.set_param(self.sim_name, 'StopTime', 'inf', nargout=0) # Simulation infinie
+        self.eng.set_param(self.sim_name, 'StopTime', '30.0', nargout=0) # Simulation infinie
 
 
         # self.eng.set_param(self.sim_name, 'SolverType', 'Fixed-step', nargout=0)
@@ -70,9 +74,9 @@ class SimulinkInstance:
         Lit la derniere ligne dans logs.csv
         """
         # use os to read the last line of logs.csv, separated by commas
-        if not os.path.exists('logs.csv'):
+        if not os.path.exists(LOG_FILE):
             return None
-        with open('logs.csv', 'r') as f:
+        with open(LOG_FILE, 'r') as f:
             lines = f.readlines()
             if not lines:
                 return None
@@ -104,7 +108,7 @@ class SimulinkInstance:
         """
         self.eng.set_param(self.sim_name, 'SimulationCommand', 'stop', nargout=0)
         self.eng.set_param(self.sim_name, 'StartTime', '0', nargout=0)
-        self.eng.set_param(self.sim_name, 'StopTime', 'inf', nargout=0)
+        self.eng.set_param(self.sim_name, 'StopTime', '30.0', nargout=0)
         print("Simulation réinitialisée et démarrée.")
 
     def close(self):
@@ -294,8 +298,12 @@ class EpisodeLoop:
         os.makedirs("experiences", exist_ok=True)
 
         # archiver l'ancien csv
-        if os.path.isfile('logs.csv'):
-            os.rename('logs.csv', f'experiences/logs_{timestamp}_{policy_name}.csv')
+        if os.path.isfile(LOG_FILE):
+            archive_name = os.path.join(
+                "experiences",
+                f"logs_{timestamp}_{policy_name}.csv"
+            )
+            os.rename(LOG_FILE, f'experiences/logs_{timestamp}_{policy_name}.csv')
             
         if self.consigne is not None:
             self.env.set_consigne(self.consigne)
@@ -305,7 +313,7 @@ class EpisodeLoop:
 
         # On remet le temps de départ
         self.env.eng.set_param(self.env.sim_name, 'StartTime', '0', nargout=0)
-        self.env.eng.set_param(self.env.sim_name, 'StopTime', 'inf', nargout=0)
+        self.env.eng.set_param(self.env.sim_name, 'StopTime', '30.0', nargout=0)
 
         # On lance la simulation en real time
         self.env.eng.set_param(self.env.sim_name, 'SimulationCommand', 'start', nargout=0)
@@ -340,3 +348,4 @@ class EpisodeLoop:
                 if action is not None:
                     Kp, Ki, Kd = action
                     self.env.set_pid_params(Kp, Ki, Kd)
+                    
