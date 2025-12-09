@@ -27,7 +27,7 @@ class SimulinkInstance:
         self.eng.load_system(self.sim_name)
         print(f"Modèle {self.sim_name}.slx chargé.")
 
-        self.set_pid_params(Kp=init_Kp, Ki=init_Ki, Kd=init_Kd)
+        #self.set_pid_params(Kp=init_Kp, Ki=init_Ki, Kd=init_Kd)
 
         # Configuration de la simulatio
 
@@ -306,7 +306,7 @@ class EpisodeLoop:
         self.env.eng.set_param(self.env.sim_name, 'StartTime', '0', nargout=0)
         self.env.eng.set_param(self.env.sim_name, 'StopTime', 'inf', nargout=0)
 
-        # On lance la simulation en real time
+        # On lance la simulation en real timem
         self.env.eng.set_param(self.env.sim_name, 'SimulationCommand', 'start', nargout=0)
         print("Simulation Simulink démarrée.")
 
