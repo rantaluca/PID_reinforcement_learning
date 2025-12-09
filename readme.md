@@ -29,4 +29,6 @@ cd "C:\Program Files\MATLAB\R20XXx\extern\engines\python"
 
 python setup.py install
 
+4. Créer le dossier suivant : "C:\temp"
+
 ### La simulation MATLAB peut maintenant s'exécuter dans le code Python 
