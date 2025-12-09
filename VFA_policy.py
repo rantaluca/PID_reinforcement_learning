@@ -11,10 +11,10 @@ class RLSTDPolicy(lib.Policy):
         dt=0.1,
         Kp_ref = 5.0,
         Ki_ref = 1.0,
-        Kd_ref = 1.0,
-        dKp = 0.5,
-        dKi = 0.1,
-        dKd = 0.1,
+        dKp = 0.01,
+        dKi = 0.001,
+        dKp2 = 0.05,
+        dKi2 = 0.005,
         beta = 100,
         epsilon = 0.1,
         gamma = 0.99,
@@ -29,11 +29,11 @@ class RLSTDPolicy(lib.Policy):
     
         self.Kp_ref = Kp_ref
         self.Ki_ref = Ki_ref
-        self.Kd_ref = Kd_ref
 
         self.dKp = dKp
         self.dKi = dKi
-        self.dKd = dKd
+        self.dKp2 = dKp2
+        self.dKi2 = dKi2
 
         self.beta = beta
         self.epsilon = epsilon
@@ -88,11 +88,10 @@ class RLSTDPolicy(lib.Policy):
         self.cumulative_error += error_norm * self.dt
         integrative_error_norm = lib.sat(self.cumulative_error / self.Integral_ref)
 
-        #789 Gains normalisés
+        #78 Gains normalisés
 
         Kp_norm = self.Kp / self.Kp_ref
         Ki_norm = self.Ki / self.Ki_ref
-        Kd_norm = self.Kd / self.Kd_ref
 
         phi = np.array([
             bias,
@@ -103,7 +102,6 @@ class RLSTDPolicy(lib.Policy):
             integrative_error_norm,
             Kp_norm,
             Ki_norm,
-            Kd_norm
         ], dtype=float)
 
         #On garde l'erreur actuelle pour le prochain step
@@ -175,17 +173,59 @@ class RLSTDPolicy(lib.Policy):
 
     def enumerate_actions(self):
         
-        ### Génération des 27 actions possibles (+/=/- dKp, +/=/- dKi, +/=/- dKd)
+        ### Génération des 9 actions possibles (+/=/- dKp, +/=/- dKi)
 
         actions = []
         for a in [-1, 0, 1]:
             for b in [-1, 0, 1]:
-                for c in [-1, 0, 1]:
-                    dKp = a * self.dKp
-                    dKi = b * self.dKi
-                    dKd = c * self.dKd
-                    actions.append((dKp, dKi, dKd))
+                dKp = a * self.dKp
+                dKi = b * self.dKi
+                actions.append((dKp, dKi))
         return actions
+    
+    def enumerate_actions_2(self):
+    
+        ### Génération des 25 actions possibles (+/=/- dKp1 ou +/=/- dkp2, +/=/- dKi1 ou +/=/- dKi2)
+
+        actions = [
+            ( self.dKp,  self.dKi),
+            ( self.dKp,  self.dKi2),
+            ( self.dKp, -self.dKi),
+            ( self.dKp, -self.dKi2),
+            ( self.dKp, 0.0),
+
+            ( self.dKp2,  self.dKi),
+            ( self.dKp2,  self.dKi2),
+            ( self.dKp2, -self.dKi),
+            ( self.dKp2, -self.dKi2),
+            ( self.dKp2, 0.0),
+
+            (-self.dKp,  self.dKi),
+            (-self.dKp,  self.dKi2),
+            (-self.dKp, -self.dKi),
+            (-self.dKp, -self.dKi2),
+            (-self.dKp, 0.0),
+
+            (-self.dKp2,  self.dKi),
+            (-self.dKp2,  self.dKi2),
+            (-self.dKp2, -self.dKi),
+            (-self.dKp2, -self.dKi2),
+            (-self.dKp2, 0.0),
+
+            (0.0,  self.dKi),
+            (0.0,  self.dKi2),
+            (0.0, -self.dKi),
+            (0.0, -self.dKi2),
+            (0.0, 0.0),
+        ]
+
+        
+
+
+    
+    
+
+    
 
     #def next_action(self, observation):
 

@@ -29,6 +29,10 @@ cd "C:\Program Files\MATLAB\R20XXx\extern\engines\python"
 
 python setup.py install
 
-4. Créer le dossier suivant : "C:\temp"
-
 ### La simulation MATLAB peut maintenant s'exécuter dans le code Python 
+
+### Autres (utilisateurs Windows)
+
+1. Créer le dossier suivant : "C:\temp"
+
+2. Dans le main, choisir le bon sys866_lib à importer

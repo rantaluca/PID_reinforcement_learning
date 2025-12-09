@@ -1,4 +1,6 @@
 import sys866_lib_Windows as ps
+#import sys866_lib as ps
+
 
 instance = ps.SimulinkInstance(
     sim_name='Simulation_SYS866_final',
