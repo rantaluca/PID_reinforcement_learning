@@ -1,5 +1,6 @@
 import sys866_lib_Windows as lib
 import numpy as np
+import os
 
 class RLSTDPolicy(lib.Policy):
 
@@ -69,9 +70,8 @@ class RLSTDPolicy(lib.Policy):
         self.last_reward = 0.0
 
         self.actions_set = 1
-
-        #Pour désactiver / activer l'entrainement de la VFA
         self.train_value_function = True
+        self.adapt_gains = True
 
 
     
@@ -277,8 +277,14 @@ class RLSTDPolicy(lib.Policy):
         # Calcul de la perte actuelle
 
         c_t = self.current_loss
+
+        #Phase 1 : Entrainement RLSTD sur P2
         
-        # Epsilon-greedy sur ensemble d'action discrètes
+        if not self.adapt_gains:
+
+            return self.Kp, self.Ki, self.Kd
+            
+        #Phase 2 : Politique epsilon-greedy
             # Si epsilon vaut 0, politique normale
 
         if np.random.rand() < self.epsilon:
@@ -316,9 +322,56 @@ class RLSTDPolicy(lib.Policy):
         return self.Kp, self.Ki, self.Kd
 
 
-        # Ici c'est à creuser vu que mon entrainement a 2 phases :
-        ## Phase 1 : echauffement des poids avec P2 (donc indépendamment des actions du dessus)
-        ## Phase 2 : entrainement VFA/RLSTD avec epsilon-greedy (soit VFA, soit action random)
+
+    def save_params(self, filepath):
+        
+        # Sauvegarde de theta et A
+        
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        np.savez(filepath, theta=self.theta, A=self.A)
+        print(f"[RLSTDPolicy] Paramètres sauvegardés dans {filepath}")
+    
+
+    
+    def load_params(self, filepath):
+        
+        # Chargement de theta et A
+
+        data = np.load(filepath)
+        theta_loaded = data["theta"]
+        A_loaded = data["A"]
+
+        assert theta_loaded.shape == self.theta.shape
+        assert A_loaded.shape == self.A.shape
+
+        self.theta = theta_loaded.copy()
+        self.A = A_loaded.copy()
+
+        self.last_phi = None
+
+        print(f"[RLSTDPolicy] Paramètres chargés depuis {filepath}")
+    
+    def reset_episode(self):
+
+        # Enchainer plusieurs simulations en conservant paramètres, et en reinitialisant le reste
+
+        self.running_loss = 0.0
+        self.current_loss = 0.0
+
+        self.prev_error = 0.0
+        self.cumulative_error = 0.0
+
+        self.last_phi = None
+        self.last_reward = 0.0
+
+        
+
+
+
+        
+
+
+
 
 
 

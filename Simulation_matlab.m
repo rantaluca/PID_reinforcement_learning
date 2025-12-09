@@ -52,6 +52,4 @@ Pc_ref = 1 / Pc;
 %% PID
 %appliquer les politiques via python
 Kp =0.40; 
-Ki =0.040; 
-Kd =0.0; 
-
+Ki =0.040;

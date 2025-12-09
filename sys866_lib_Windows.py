@@ -3,6 +3,7 @@ import math
 import time
 import matlab.engine
 import os
+import shutil
 
 
 LOG_DIR = r"C:\temp"   
@@ -119,6 +120,16 @@ class SimulinkInstance:
         self.eng.quit()
         print("MATLAB Engine fermé.")   
 
+    def rerun_pre_script(self):
+        """
+        Relance le script préliminaire (par ex. pour regénérer une nouvelle seed/bruit)
+        """
+        if hasattr(self, "pre_script") and self.pre_script is not None:
+            self.eng.run(self.pre_script, nargout=0)
+            print(f"Script préliminaire {self.pre_script} relancé.")
+    
+        
+
 class Policy:
     """
     Template de politique
@@ -227,6 +238,26 @@ class RealTimePlotter:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
+    def reset(self):
+        """
+        Réinitialise les historiques et les courbes pour un nouvel épisode.
+        """
+        self.times.clear()
+        self.consigne_hist.clear()
+        self.error_hist.clear()
+        self.command_hist.clear()
+        self.output_hist.clear()
+
+        self.line_consigne.set_data([], [])
+        self.line_error.set_data([], [])
+        self.line_command.set_data([], [])
+        self.line_output.set_data([], [])
+
+        self.ax.relim()
+        self.ax.autoscale_view()
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+
 class LossPlotter:
     """
     Gère une figure matplotlib pour la loss en temps réel 
@@ -267,16 +298,33 @@ class LossPlotter:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
+    def reset(self):
+        """
+        Réinitialise les historiques de loss pour un nouvel épisode.
+        """
+        self.times.clear()
+        self.current_loss_hist.clear()
+        self.running_loss_hist.clear()
+
+        self.line_current_loss.set_data([], [])
+        self.line_running_loss.set_data([], [])
+
+        self.ax.relim()
+        self.ax.autoscale_view()
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+
 class EpisodeLoop:
     """
     Classe pour gérer une boucle d'épisode.
     """
-    def __init__(self, env, consigne, policy, max_steps=1000, policy_dt=0.1, plot=True):
+    def __init__(self, env, consigne, policy, max_steps=1000, policy_dt=0.1, plot=True, max_sim_time = 30.0):
         self.env = env
         self.consigne = consigne  
         self.policy = policy
         self.max_steps = max_steps
         self.policy_dt = policy_dt
+        self.max_sim_time = max_sim_time
         if plot:
             self.plotter = RealTimePlotter()
             self.loss_plotter = LossPlotter()
@@ -291,11 +339,17 @@ class EpisodeLoop:
         # Démarre la simulation
         #self.env.start_sim(total_time=self.sim_total_time)
 
+        if hasattr(self.env, "rerun_pre_script"):
+            self.env.rerun_pre_script()
+
         # sauavegarde l'ancien logs.csv dans experience du date et heure
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         policy_name = self.policy.__class__.__name__
         # créer le dossier experiences 
         os.makedirs("experiences", exist_ok=True)
+
+        # On s'assure que la simu est arrêtée
+        self.env.eng.set_param(self.env.sim_name, 'SimulationCommand', 'stop', nargout=0)
 
         # archiver l'ancien csv
         if os.path.isfile(LOG_FILE):
@@ -303,23 +357,36 @@ class EpisodeLoop:
                 "experiences",
                 f"logs_{timestamp}_{policy_name}.csv"
             )
-            os.rename(LOG_FILE, f'experiences/logs_{timestamp}_{policy_name}.csv')
+            try:
+                shutil.copy2(LOG_FILE, archive_name)
+                print(f"Log copié vers {archive_name}")
+            except PermissionError as e:
+                print(f"Impossible de copier logs.csv ({e}), on continue quand même.")
+            
+            
+            #os.rename(LOG_FILE, f'experiences/logs_{timestamp}_{policy_name}.csv')
             
         if self.consigne is not None:
             self.env.set_consigne(self.consigne)
 
-        # On s'assure que la simu est arrêtée
-        self.env.eng.set_param(self.env.sim_name, 'SimulationCommand', 'stop', nargout=0)
-
         # On remet le temps de départ
         self.env.eng.set_param(self.env.sim_name, 'StartTime', '0', nargout=0)
-        self.env.eng.set_param(self.env.sim_name, 'StopTime', '30.0', nargout=0)
+        self.env.eng.set_param(self.env.sim_name, 'StopTime', str(self.max_sim_time), nargout=0)
 
         # On lance la simulation en real time
         self.env.eng.set_param(self.env.sim_name, 'SimulationCommand', 'start', nargout=0)
         print("Simulation Simulink démarrée.")
 
         for step in range(self.max_steps):
+
+            sim_time = self.env.get_sim_time()
+
+            sim_status = self.env.eng.get_param(self.env.sim_name, 'SimulationStatus')
+
+            if sim_time >= self.max_sim_time or sim_status != 'running':
+                print(f"Fin de l'épisode (sim_time={sim_time:.2f}, status={sim_status}).")
+                break
+
             # Récupérer l'observation actuelle et le temps de simulation
             observation, info = self.env.step()
             if observation is None:
@@ -329,8 +396,6 @@ class EpisodeLoop:
             if observation[0] == 0:
                 print("Consigne nulle détectée")
                 continue
-
-            sim_time = self.env.get_sim_time()
 
             # Calcul de la perte
             current_loss, running_loss = self.policy.compute_loss(observation)
@@ -349,3 +414,10 @@ class EpisodeLoop:
                     Kp, Ki, Kd = action
                     self.env.set_pid_params(Kp, Ki, Kd)
                     
+
+        # Fin de l'épisode : afficher la loss totale accumulée par la policy
+        total_loss = getattr(self.policy, 'running_loss', None)
+        if total_loss is not None:
+            print(f"Total loss for episode: {total_loss:.4f}")
+        else:
+            print("Total loss unavailable: policy has no 'running_loss' attribute")
