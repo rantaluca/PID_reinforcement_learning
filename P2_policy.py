@@ -1,7 +1,7 @@
 import numpy as np
 import sys866_lib as lib
 
-class P2Policy(lib.Policy):
+class P2Policy(lib.Policy, lib.SimulinkInstance):
   def __init__(self,
                consigne, 
                consigne_tresh=0.97,
@@ -65,10 +65,10 @@ class P2Policy(lib.Policy):
 
 
 
-    def update_value_function(self, phi_next):
-        
-        
-        self.last_phi = phi.copy()
+    def Initialisation_P2(self, phi ):
+      #initialisation et envoie à Simulink des données du P2
+      set_pid_params(self, Kp_norm, Ki_norm, Kd_norm)
+      self.last_phi = phi.copy()
         
 
 
