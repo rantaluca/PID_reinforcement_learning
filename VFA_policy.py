@@ -79,6 +79,8 @@ class RLSTDPolicy(lib.Policy):
 
         consigne, error, command, output = observation
 
+        error_square = error ** 2
+
         ## Calcul des features pour la VFA (phi)
 
         #1 Le biais vaut 1
@@ -94,7 +96,7 @@ class RLSTDPolicy(lib.Policy):
 
         #3 Calcul de l'erreur carrée
 
-        error_norm_squared = error_norm ** 2
+        error_norm_squared = error_square / consigne
 
         #4 Calcul de l'erreur dérivée
 

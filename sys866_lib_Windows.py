@@ -13,7 +13,7 @@ class SimulinkInstance:
     """
     Classe pour gérer une instance Simulink.
     """
-    def __init__(self, sim_name, pid_block, consigne_block, init_Kp, init_Ki, init_Kd, dt_sim=0.01, pre_script=None):
+    def __init__(self, sim_name, pid_block, consigne_block, init_Kp, init_Ki, init_Kd, dt_sim=0., pre_script=None):
         self.sim_name = sim_name
         self.pid_block = pid_block
         self.consigne_block = consigne_block
@@ -343,29 +343,30 @@ class EpisodeLoop:
             self.env.rerun_pre_script()
 
         # sauavegarde l'ancien logs.csv dans experience du date et heure
-        timestamp = time.strftime("%Y%m%d-%H%M%S")
-        policy_name = self.policy.__class__.__name__
+
+
+
+        #####timestamp = time.strftime("%Y%m%d-%H%M%S")
+        #####policy_name = self.policy.__class__.__name__
+
+
         # créer le dossier experiences 
-        os.makedirs("experiences", exist_ok=True)
+        #####os.makedirs("experiences", exist_ok=True)
 
         # On s'assure que la simu est arrêtée
         self.env.eng.set_param(self.env.sim_name, 'SimulationCommand', 'stop', nargout=0)
 
-        # archiver l'ancien csv
-        if os.path.isfile(LOG_FILE):
-            archive_name = os.path.join(
-                "experiences",
-                f"logs_{timestamp}_{policy_name}.csv"
-            )
-            try:
-                shutil.copy2(LOG_FILE, archive_name)
-                print(f"Log copié vers {archive_name}")
-            except PermissionError as e:
-                print(f"Impossible de copier logs.csv ({e}), on continue quand même.")
-            
-            
-            #os.rename(LOG_FILE, f'experiences/logs_{timestamp}_{policy_name}.csv')
-            
+        ##### if os.path.isfile(LOG_FILE):
+        #     archive_name = os.path.join(
+        #         "experiences",
+        #         f"logs_{timestamp}_{policy_name}.csv"
+        #     )
+        #     try:
+        #         shutil.copy2(LOG_FILE, archive_name)
+        #         print(f"Log copié vers {archive_name}")
+        #     except PermissionError as e:
+        #####         print(f"Impossible de copier logs.csv ({e}), on continue quand même.")
+
         if self.consigne is not None:
             self.env.set_consigne(self.consigne)
 
