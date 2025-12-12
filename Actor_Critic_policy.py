@@ -10,14 +10,12 @@ class ActorCriticPolicy(ps.Policy,nn.Module):
         ps.Policy.__init__(self, consigne, consigne_tresh, loss_params, dt)
         nn.Module.__init__(self)
 
-        # Device
-        if device is None:
-            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.device = torch.device(device)
 
         # Actor network
         self.actor = nn.Sequential(
-            nn.Linear(#taiille feature , 128),
+            nn.Linear(8 , 128),
             nn.ReLU(),
             nn.Linear(128, 64),
             nn.ReLU(),
@@ -27,17 +25,30 @@ class ActorCriticPolicy(ps.Policy,nn.Module):
 
         # Critic network
         self.critic = nn.Sequential(
-            nn.Linear(#taiille feature , 128),
+            nn.Linear(8, 128),
             nn.ReLU(),
             nn.Linear(128, 64),
             nn.ReLU(),
             nn.Linear(64, 1)
         )
 
+        # Initialisation des variables pour le calcul des features
+        self.prev_error = 0.0
+        self.cumulative_error = 0.0
+        self.Integral_ref = 1.0
+
+        # Optimizers
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=actor_lr)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=critic_lr)
         self.gamma = gamma
 
+    def load_actor_critic(self, actor_path, critic_path):
+        """
+        Load the actor and critic networks from saved files.
+        
+        """
+        self.actor.load_state_dict(torch.load(actor_path))
+        self.critic.load_state_dict(torch.load(critic_path))
 
 
     def compute_loss(self, observation):
@@ -48,66 +59,71 @@ class ActorCriticPolicy(ps.Policy,nn.Module):
 
         self.last_reward = -current_loss
 
-        return current_loss, running_loss, self.last_reward
+        return current_loss, running_loss
     
 
     def compute_features(self, observation):
-        # récup policy VFA
+
+        consigne, error, command, output = observation
+
+        error_square = error ** 2
+
         ## Calcul des features pour la VFA (phi)
 
         #1 Le biais vaut 1
 
         bias = 1.0
 
-        #2 Calcul de l'erreur statique
+        #2 Calcul de l'erreur statique normalisée
 
-        error = self.consigne - observation[0]
-        error_norm = error / self.consigne
+        if consigne == 0:
+            error_norm = 0.0
+        else:
+            error_norm = error / consigne
 
         #3 Calcul de l'erreur carrée
 
-        error_norn_squared = error_norm^2
+        error_norm_squared = error_square / consigne
 
         #4 Calcul de l'erreur dérivée
 
         derivative_error = error - self.prev_error
-        derivative_error_norm = derivative_error / self.consigne
+        if consigne == 0:
+            derivative_error_norm = 0.0
+        else:
+            derivative_error_norm = derivative_error / consigne
 
         #5 Calcul de l'indicateur de non-convergence
 
-        if (abs(error) >= self.consigne * (1.0 - self.consigne_tresh)):
+        if (abs(error) >= consigne * (1.0 - self.consigne_tresh)):
             conv_norm = 1.0
         else:
             conv_norm = 0.0
         
         #6 Calcul de l'erreur intégrale nomalisée
 
-        self.cumulative_error += error_norm * self.dt
-        integrative_error_norm = lib.sat(self.cumulative_error / self.Integral_ref)
+        integrative_error_norm = max(-1.0, min(1.0, self.cumulative_error / self.Integral_ref))
 
-        #789 Gains normalisés
+        #78 Gains normalisés
 
         Kp_norm = self.Kp / self.Kp_ref
         Ki_norm = self.Ki / self.Ki_ref
-        Kd_norm = self.Kd / self.Kd_ref
 
         phi = np.array([
             bias,
             error_norm,
-            error_norn_squared,
+            error_norm_squared,
             derivative_error_norm,
             conv_norm,
             integrative_error_norm,
             Kp_norm,
             Ki_norm,
-            Kd_norm
         ], dtype=float)
-
-        #On garde l'erreur actuelle pour le prochain step
 
         self.prev_error = error
 
         return phi
+    
     
     def get_feature_size(self):
         return len(self.compute_features(np.array([0.0,0.0, 0.0, 0.0])))
@@ -151,9 +167,10 @@ class ActorCriticPolicy(ps.Policy,nn.Module):
         actor_loss.backward()
         self.actor_optimizer.step()
 
+
     def next_action(self, observation):
-        # pred sans apprentissage
-        state = torch.FloatTensor(observation).to(self.device)
+        features = self.compute_features(observation)
+        state = torch.FloatTensor(features).to(self.device)
         action_params = self.actor(state)
         mu = action_params[:3]
         return mu.detach().cpu().numpy()
