@@ -27,7 +27,7 @@ class SimulinkInstance:
         self.eng.load_system(self.sim_name)
         print(f"Modèle {self.sim_name}.slx chargé.")
 
-        self.set_pid_params(Kp=init_Kp, Ki=init_Ki, Kd=init_Kd)
+        #self.set_pid_params(Kp=init_Kp, Ki=init_Ki, Kd=init_Kd)
 
         # Configuration de la simulatio
 
@@ -47,7 +47,7 @@ class SimulinkInstance:
         self.eng.set_param(f"{self.sim_name}/{self.pid_block}", 'P', str(Kp), nargout=0)
         self.eng.set_param(f"{self.sim_name}/{self.pid_block}", 'I', str(Ki), nargout=0)
         self.eng.set_param(f"{self.sim_name}/{self.pid_block}", 'D', str(Kd), nargout=0)
-        print(f"Paramètres PID mis à jour: Kp={Kp}, Ki={Ki}, Kd={Kd}")
+        #print(f"Paramètres PID mis à jour: Kp={Kp}, Ki={Ki}, Kd={Kd}")
 
     def get_pid_params(self):
         """
@@ -85,10 +85,13 @@ class SimulinkInstance:
         return observation
         
     def step(self):
-        """Step la simulation d'un pas de temps"""
-        time.sleep(self.dt_sim)  # laisse Simulink avancer
-        obs = self.get_observation()
-        return obs, {}
+        last_t = self.get_sim_time()
+        while True:
+            t = self.get_sim_time()
+            if t > last_t:
+                break
+        return self.get_observation(), {}
+
     
     def get_sim_time(self):
         """
@@ -150,7 +153,7 @@ class Policy:
         else:
             overshoot_norm = overshoot / self.consigne
 
-        # Calcul de l'indicateur de non-convergence
+        # Calcul de l'indicateur de non-crunning_lossonvergence
 
         if (abs(error) >= self.consigne * (1.0 - self.consigne_tresh)):
             conv_norm = 1.0
@@ -175,6 +178,75 @@ class Policy:
 import matplotlib.pyplot as plt
 from collections import deque
 
+import matplotlib.pyplot as plt
+
+class OfflinePlotter:
+    """
+    Plot non temps réel.
+    Stocke les données et sauvegarde à la fin.
+    """
+    def __init__(self):
+        self.times = []
+        self.consigne = []
+        self.error = []
+        self.command = []
+        self.output = []
+
+    def update(self, t, obs):
+        self.times.append(t)
+        self.consigne.append(obs[0])
+        self.error.append(obs[1])
+        self.command.append(obs[2])
+        self.output.append(obs[3])
+
+    def save(self, filename):
+        fig, ax = plt.subplots()
+
+        ax.plot(self.times, self.consigne, label="Consigne")
+        ax.plot(self.times, self.error, label="Erreur")
+        ax.plot(self.times, self.command, label="Commande")
+        ax.plot(self.times, self.output, label="Sortie")
+
+        ax.set_title("Évolution du système")
+        ax.set_xlabel("Temps (s)")
+        ax.set_ylabel("Valeurs")
+        ax.grid(True)
+        ax.legend()
+
+        fig.savefig(filename)
+        plt.close(fig)
+
+
+class OfflineLossPlotter:
+    """
+    Plot offline de la loss
+    """
+    def __init__(self):
+        self.times = []
+        self.current_loss = []
+        self.running_loss = []
+
+    def update(self, t, current_loss, running_loss):
+        self.times.append(t)
+        self.current_loss.append(current_loss)
+        self.running_loss.append(running_loss)
+
+    def save(self, filename):
+        fig, ax = plt.subplots()
+
+        ax.plot(self.times, self.current_loss, label="Loss courante")
+        ax.plot(self.times, self.running_loss, label="Loss cumulée")
+
+        ax.set_title("Évolution de la loss")
+        ax.set_xlabel("Temps (s)")
+        ax.set_ylabel("Loss")
+        ax.grid(True)
+        ax.legend()
+
+        fig.savefig(filename)
+        plt.close(fig)
+
+
 class RealTimePlotter:
     """
     Gère une figure matplotlib en temps réel 
@@ -186,13 +258,13 @@ class RealTimePlotter:
         self.times = deque(maxlen=max_points)
         self.consigne_hist = deque(maxlen=max_points)
         self.error_hist = deque(maxlen=max_points)
-        self.command_hist = deque(maxlen=max_points)
+        #self.command_hist = deque(maxlen=max_points)
         self.output_hist = deque(maxlen=max_points)
 
         self.fig, self.ax = plt.subplots()
         self.line_consigne, = self.ax.plot([], [], label="Consigne")
         self.line_error, = self.ax.plot([], [], label="Erreur")
-        self.line_command, = self.ax.plot([], [], label="Commande")
+        #self.line_command, = self.ax.plot([], [], label="Commande")
         self.line_output, = self.ax.plot([], [], label="Sortie")
 
         self.ax.legend()
@@ -208,12 +280,12 @@ class RealTimePlotter:
         self.times.append(t)
         self.consigne_hist.append(obs[0])
         self.error_hist.append(obs[1])
-        self.command_hist.append(obs[2])
+        #self.command_hist.append(obs[2])
         self.output_hist.append(obs[3])
 
         self.line_consigne.set_data(self.times, self.consigne_hist)
         self.line_error.set_data(self.times, self.error_hist)
-        self.line_command.set_data(self.times, self.command_hist)
+        #self.line_command.set_data(self.times, self.command_hist)
         self.line_output.set_data(self.times, self.output_hist)
 
         self.ax.relim()
@@ -221,6 +293,27 @@ class RealTimePlotter:
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+
+    def save(self, filename):
+        fig, ax = plt.subplots()
+
+        ax.plot(self.times, self.consigne_hist, label="Consigne")
+        ax.plot(self.times, self.error_hist, label="Erreur")
+        #ax.plot(self.times, self.command_hist, label="Commande")
+        ax.plot(self.times, self.output_hist, label="Sortie")
+
+        ax.set_title("Évolution du système")
+        ax.set_xlabel("Temps (s)")
+        ax.set_ylabel("Valeurs")
+        ax.grid(True)
+        ax.legend()
+
+        fig.savefig(filename)
+        plt.close(fig)
+
+    def close(self):
+        plt.ioff()
+        plt.close(self.fig)
 
 class LossPlotter:
     """
@@ -262,19 +355,99 @@ class LossPlotter:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
+    def save(self, filename):
+        fig, ax = plt.subplots()
+
+        ax.plot(self.times, self.current_loss_hist, label="Perte Courante")
+        ax.plot(self.times, self.running_loss_hist, label="Perte Totale")
+
+        ax.set_title("Évolution de la Loss")
+        ax.set_xlabel("Temps (s)")
+        ax.set_ylabel("Loss")
+        ax.grid(True)
+        ax.legend()
+
+        fig.savefig(filename)
+        plt.close(fig)
+
+    def close(self):
+        plt.ioff()
+        plt.close(self.fig)
+
+class PIgainsPlotter():
+    """
+    Plot les gains Kp et Ki en temps réel
+    """
+
+    def __init__(self, max_points=500):
+        plt.ion()  # mode interactif
+
+        self.max_points = max_points
+        self.times = deque(maxlen=max_points)
+        self.Kp_hist = deque(maxlen=max_points)
+        self.Ki_hist = deque(maxlen=max_points)
+
+        self.fig, self.ax = plt.subplots()
+        self.line_Kp, = self.ax.plot([], [], label="Kp")
+        self.line_Ki, = self.ax.plot([], [], label="Ki")
+
+        self.ax.legend()
+        self.ax.set_title("Évolution des gains Kp et Ki en Temps Réel")
+        self.ax.set_xlabel("Temps (s)")
+        self.ax.set_ylabel("Gains")
+        self.ax.grid(True)
+
+    def update(self, t, Kp, Ki):
+        """
+        Met à jour les courbes des gains en temps réel.
+        """
+        self.times.append(t)
+        self.Kp_hist.append(Kp)
+        self.Ki_hist.append(Ki)
+
+        self.line_Kp.set_data(self.times, self.Kp_hist)
+        self.line_Ki.set_data(self.times, self.Ki_hist)
+
+        self.ax.relim()
+        self.ax.autoscale_view()
+
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+
+    def save(self, filename):
+        fig, ax = plt.subplots()
+
+        ax.plot(self.times, self.Kp_hist, label="Kp")
+        ax.plot(self.times, self.Ki_hist, label="Ki")
+
+        ax.set_title("Évolution des gains Kp et Ki")
+        ax.set_xlabel("Temps (s)")
+        ax.set_ylabel("Gains")
+        ax.grid(True)
+        ax.legend()
+
+        fig.savefig(filename)
+        plt.close(fig)
+    
+    def close(self):
+        plt.ioff()
+        plt.close(self.fig)
+
 class EpisodeLoop:
     """
     Classe pour gérer une boucle d'épisode.
     """
-    def __init__(self, env, consigne, policy, max_steps=1000, policy_dt=0.1, plot=True):
+    def __init__(self, env, consigne, policy, max_steps=1000, max_time=30, policy_dt=0.1, plot=True):
         self.env = env
         self.consigne = consigne  
         self.policy = policy
         self.max_steps = max_steps
+        self.max_time = max_time
         self.policy_dt = policy_dt
         if plot:
             self.plotter = RealTimePlotter()
             self.loss_plotter = LossPlotter()
+            self.gains_plotter = PIgainsPlotter()
         else:
             self.plotter = None
             self.loss_plotter = None
@@ -301,12 +474,15 @@ class EpisodeLoop:
 
         # On s'assure que la simu est arrêtée
         self.env.eng.set_param(self.env.sim_name, 'SimulationCommand', 'stop', nargout=0)
+        self.env.eng.set_param(self.env.sim_name, 'SimulationCommand', 'update', nargout=0)
+        self.env.eng.set_param(self.env.sim_name, 'FastRestart', 'off', nargout=0)
+
 
         # On remet le temps de départ
         self.env.eng.set_param(self.env.sim_name, 'StartTime', '0', nargout=0)
         self.env.eng.set_param(self.env.sim_name, 'StopTime', 'inf', nargout=0)
 
-        # On lance la simulation en real time
+        # On lance la simulation en real timem
         self.env.eng.set_param(self.env.sim_name, 'SimulationCommand', 'start', nargout=0)
         print("Simulation Simulink démarrée.")
 
@@ -323,12 +499,17 @@ class EpisodeLoop:
 
             sim_time = self.env.get_sim_time()
 
+            if sim_time >= self.max_time:
+                print(f"Temps maximum de l'épisode atteint: {sim_time:.2f}s")
+                break
+
             # Calcul de la perte
             current_loss, running_loss = self.policy.compute_loss(observation)
             if self.loss_plotter is not None:
                 self.loss_plotter.update(sim_time, current_loss, None)
-            else:
-                print(f"Temps: {sim_time:.2f}s, Observation: {observation}, Perte courante: {current_loss:.4f}, Perte totale: {running_loss:.4f}")
+                #print(f"Temps: {sim_time:.2f}s, Observation: {observation}, Perte courante: {current_loss:.4f}, Perte totale: {running_loss:.4f}")
+            #else:
+                #print(f"Temps: {sim_time:.2f}s, Observation: {observation}, Perte courante: {current_loss:.4f}, Perte totale: {running_loss:.4f}")
 
             if self.plotter is not None:
                 self.plotter.update(sim_time, observation)
@@ -339,3 +520,24 @@ class EpisodeLoop:
                 if action is not None:
                     Kp, Ki, Kd = action
                     self.env.set_pid_params(Kp, Ki, Kd)
+                    if self.gains_plotter is not None:
+                        self.gains_plotter.update(sim_time, Kp, Ki)
+
+        print("Fin épisode.")
+        mean_running_loss = self.policy.running_loss / (step + 1)
+        print(f"Perte totale de l'épisode: {self.policy.running_loss:.4f}")
+        print("loss moyenne par step: ", mean_running_loss)
+        
+        # Sauvegarde des plots          
+        print("Sauvegarde des plots.")
+        if self.plotter is not None:
+            self.plotter.save(f"plots/eval_plot_{timestamp}_{policy_name}.png")
+            self.plotter.close()
+        if self.loss_plotter is not None:
+            self.loss_plotter.save(f"plots/eval_loss_plot_{timestamp}_{policy_name}.png")
+            self.loss_plotter.close()
+        if self.gains_plotter is not None:
+            self.gains_plotter.save(f"plots/eval_gains_plot_{timestamp}_{policy_name}.png")
+            self.gains_plotter.close()
+            
+        return self.policy.running_loss, mean_running_loss
