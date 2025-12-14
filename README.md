@@ -1,5 +1,5 @@
 # Projet SYS866 : Contrôle PID par Apprentissage par Renforcement
-## Auteurs : Céline Ngyuen, Erwan Audousset, Robert Antaluca, Romain Lemaire
+## Auteurs : Céline Nguyen, Erwan Audousset, Robert Antaluca, Romain Lemaire
 <img src="plots/eval_plot_20251213-120135_ActorCriticPolicy.png" >
 Ce ReadMe décrit les étapes pour installer et exécuter notre projet de contrôle PID .
 
