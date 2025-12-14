@@ -1,0 +1,392 @@
+MATLAB Engine démarré. Chargement du modèle Simulation_simulink_Mac.slx...
+Script préliminaire Simulation_matlab exécuté.
+Modèle Simulation_simulink_Mac.slx chargé.
+Actor-Critic models loaded.
+
+============================================================
+ Test 1 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.30s
+Fin épisode.
+Perte totale de l'épisode: 13.1231
+loss moyenne par step:  0.09307173988808064
+Sauvegarde des plots.
+
+============================================================
+ Test 2 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.40s
+Fin épisode.
+Perte totale de l'épisode: 68.1588
+loss moyenne par step:  0.4799914778701222
+Sauvegarde des plots.
+
+============================================================
+ Test 3 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.20s
+Fin épisode.
+Perte totale de l'épisode: 10.3418
+loss moyenne par step:  0.07232057088023543
+Sauvegarde des plots.
+
+============================================================
+ Test 4 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.10s
+Fin épisode.
+Perte totale de l'épisode: 7.5977
+loss moyenne par step:  0.054268953516021054
+Sauvegarde des plots.
+
+============================================================
+ Test 5 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.40s
+Fin épisode.
+Perte totale de l'épisode: 9.5145
+loss moyenne par step:  0.0660727171738152
+Sauvegarde des plots.
+
+============================================================
+ Test 6 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.10s
+Fin épisode.
+Perte totale de l'épisode: 16.1126
+loss moyenne par step:  0.11675761440944134
+Sauvegarde des plots.
+
+============================================================
+ Test 7 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.50s
+Fin épisode.
+Perte totale de l'épisode: 16.8511
+loss moyenne par step:  0.11951119912565877
+Sauvegarde des plots.
+
+============================================================
+ Test 8 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.20s
+Fin épisode.
+Perte totale de l'épisode: 9.9204
+loss moyenne par step:  0.070860058459826
+Sauvegarde des plots.
+
+============================================================
+ Test 9 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.50s
+Fin épisode.
+Perte totale de l'épisode: 16.5150
+loss moyenne par step:  0.11881306737561598
+Sauvegarde des plots.
+
+============================================================
+ Test 10 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.30s
+Fin épisode.
+Perte totale de l'épisode: 25.1334
+loss moyenne par step:  0.19790068712962353
+Sauvegarde des plots.
+
+============================================================
+ Test 11 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.20s
+Fin épisode.
+Perte totale de l'épisode: 15.4619
+loss moyenne par step:  0.11625463152207924
+Sauvegarde des plots.
+
+============================================================
+ Test 12 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.30s
+Fin épisode.
+Perte totale de l'épisode: 104.3275
+loss moyenne par step:  0.7903601937148195
+Sauvegarde des plots.
+
+============================================================
+ Test 13 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.80s
+Fin épisode.
+Perte totale de l'épisode: 24.8604
+loss moyenne par step:  0.1973048647502512
+Sauvegarde des plots.
+
+============================================================
+ Test 14 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.20s
+Fin épisode.
+Perte totale de l'épisode: 30.1212
+loss moyenne par step:  0.24291327617959463
+Sauvegarde des plots.
+
+============================================================
+ Test 15 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.20s
+Fin épisode.
+Perte totale de l'épisode: 12.0121
+loss moyenne par step:  0.09458382516994399
+Sauvegarde des plots.
+
+============================================================
+ Test 16 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.50s
+Fin épisode.
+Perte totale de l'épisode: 9.4182
+loss moyenne par step:  0.07534548908521391
+Sauvegarde des plots.
+
+============================================================
+ Test 17 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.40s
+Fin épisode.
+Perte totale de l'épisode: 27.9884
+loss moyenne par step:  0.19710164118844573
+Sauvegarde des plots.
+
+============================================================
+ Test 18 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.30s
+Fin épisode.
+Perte totale de l'épisode: 16.5049
+loss moyenne par step:  0.11789204609837071
+Sauvegarde des plots.
+
+============================================================
+ Test 19 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.50s
+Fin épisode.
+Perte totale de l'épisode: 19.7515
+loss moyenne par step:  0.14630764906280305
+Sauvegarde des plots.
+
+============================================================
+ Test 20 / 20
+============================================================
+Simulation Simulink démarrée.
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Consigne nulle détectée
+Temps maximum de l'épisode atteint: 45.30s
+Fin épisode.
+Perte totale de l'épisode: 8.7845
+loss moyenne par step:  0.06365592418233158
+Sauvegarde des plots.
+
+============================================================
+ Résultats des tests 
+============================================================
+ Perte totale moyenne sur les tests : 23.1250
+ Perte moyenne par step sur les tests : 0.1716
+ Durée totale des tests : 1085.17 secondes
+ Durée moyenne par test : 54.26 secondes
+MATLAB Engine fermé.
