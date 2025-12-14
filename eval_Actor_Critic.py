@@ -1,4 +1,6 @@
 import sys866_lib as ps
+# si windows utilisez la ligne suivante à la place de la précédente
+# import sys866_lib_windows as ps
 import P2_policy as P2
 import Actor_Critic_policy as ac
 
@@ -6,6 +8,7 @@ NB_TEST = 20
 
 env = ps.SimulinkInstance(
     sim_name='Simulation_simulink_Mac',
+    # sim_name='Simulation_simulink_Windows', # si windows decommentez cette ligne et commentez la ligne au dessus
     pid_block='PID_Controller',
     consigne_block=None,
     init_Kp=0.4, #gains de la politique P2

@@ -1,4 +1,6 @@
 import sys866_lib as ps
+# si windows utilisez la ligne suivante à la place de la précédente
+# import sys866_lib_windows as ps
 import Actor_Critic_policy as ac
 import torch
 import os

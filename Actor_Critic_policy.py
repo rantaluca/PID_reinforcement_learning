@@ -4,6 +4,8 @@ import torch.optim as optim
 from torch.distributions import Normal
 import numpy as np
 import sys866_lib as ps
+# si windows utilisez la ligne suivante à la place de la précédente
+# import sys866_lib_windows as ps
 
 class ActorCriticPolicy(ps.Policy,nn.Module):
     def __init__(self, consigne=None, consigne_tresh=0.97, loss_params={'error':5.0, 'dep':0.5, 'conv':0.3}, Kp_init = 0.4, Ki_init=0.04, dt=0.1, actor_lr=1e-5, critic_lr=5e-5, gamma=0.90):
