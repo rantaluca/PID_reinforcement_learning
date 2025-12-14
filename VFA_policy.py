@@ -1,4 +1,6 @@
 import sys866_lib_Windows as lib
+# si mac utilisez la ligne suivante à la place de la précédente
+# import sys866_lib_Mac as lib
 import numpy as np
 import os
 

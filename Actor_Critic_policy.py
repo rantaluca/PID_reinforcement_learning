@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.distributions import Normal
 import numpy as np
-import sys866_lib as ps
+import sys866_lib_Mac as ps
 # si windows utilisez la ligne suivante à la place de la précédente
 # import sys866_lib_windows as ps
 

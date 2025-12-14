@@ -322,6 +322,8 @@ import os
 
 instance = ps.SimulinkInstance(
     sim_name='Simulation_simulink_Windows',
+    # si mac utilisez la ligne suivante à la place de la précédente
+    #sim_name='Simulation_simulink_Mac',
     pid_block='PID_Controller',
     consigne_block=None,
     init_Kp=0.4,

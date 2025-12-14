@@ -24,27 +24,27 @@ pip install matplotlib
 
 1. Ouvrir un terminal.
 2. Se rendre dans le dossier :
-
+```sh
 cd /Applications/MATLAB_R20XXx.app/extern/engines/python
-
+```
 Il faut remplacer `R20XXx` par la version de MATLAB installée (par exemple, `R2024a`, `R2025a`).
 
 3. Installer avec :
-
+```sh
 python3 setup.py install
-
+```
 ### Windows
 
 1. Ouvrir CMD ou PowerShell.
 2. Se rendre dans le dossier :
-
+```sh
 cd "C:\Program Files\MATLAB\R20XXx\extern\engines\python"
-
+```
 (Il faut remplacer `R20XXx` par la version de MATLAB installée, par exemple, `R2024a`, `R2025a`).
 3. Installer avec :
-
+```sh
 python setup.py install
-
+```
 4. Créer le dossier suivant à la racine  : "C:\temp"
 
 5. Il faut ensuite utiliser le fichier `sys866_lib_windows.py` à la place de `sys866_lib.py` dans les scripts python du projet (voir lignes commentées dans les fichiers que vous souhaitez exécuter).
