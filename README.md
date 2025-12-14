@@ -1,6 +1,6 @@
 # Projet SYS866 : Contrôle PID par Apprentissage par Renforcement
 ## Auteurs : Céline Nguyen, Erwan Audousset, Robert Antaluca, Romain Lemaire
-<img src="plots/eval_plot_20251213-120135_ActorCriticPolicy.png" >
+
 Ce ReadMe décrit les étapes pour installer et exécuter notre projet de contrôle PID .
 
 Nous vous conseillons d'executer ce projet sur un Mac ou Linux pour une meilleure compatibilité avec le MATLAB Engine python sur lequel repose la simulation.
@@ -45,7 +45,7 @@ cd "C:\Program Files\MATLAB\R20XXx\extern\engines\python"
 ```sh
 python setup.py install
 ```
-4. Créer le dossier suivant à la racine  : "C:\temp"
+4. Créer le dossier suivant à la racine  : `C:\temp`
 
 5. Il faut ensuite utiliser le fichier `sys866_lib_windows.py` à la place de `sys866_lib.py` dans les scripts python du projet (voir lignes commentées dans les fichiers que vous souhaitez exécuter).
 
@@ -90,7 +90,7 @@ python3 eval_Actor_Critic.py
 - Assurez-vous que MATLAB est installé et que le MATLAB Engine pour Python est correctement configuré avant d'exécuter les scripts.
 - Si vous utilisez Windows, n'oubliez pas de modifier les imports dans les scripts Python pour utiliser `sys866_lib_windows.py` à la place de `sys866_lib.py`.
 - Les scripts sont configurés pour utiliser la simulation MATLAB nommée `Simulation_simulink_Mac` par défaut. Si vous êtes sous Windows, décommentez la ligne correspondante et commentez celle pour Mac dans les scripts.
-- Assurez-vous que le dossier "C:\temp" existe si vous utilisez Windows, car le MATLAB Engine pour Python l'utilise pour stocker des fichiers temporaires.
+- Assurez-vous que le dossier `C:\temp` existe si vous utilisez Windows, car le MATLAB Engine pour Python l'utilise pour stocker des fichiers temporaires.
 
 ### Structure des fichiers
 - `sys866_lib.py` : Bibliothèque pour interfacer Python avec la simulation MATLAB (Mac/Linux).
