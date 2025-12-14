@@ -3,13 +3,17 @@ import math
 import time
 import matlab.engine
 import os
+
 class SimulinkInstance:
     """
     Classe pour gérer une instance Simulink.
     """
-    def __init__(self, sim_name, pid_block, consigne_block, init_Kp, init_Ki, init_Kd, dt_sim=0.01, pre_script=None):
+    def __init__(self, sim_name, pid_block, consigne_block, consigne_block, init_Kp, init_Ki, init_Kd, dt_sim=0.01, pre_script=None, pre_script=None):
         self.sim_name = sim_name
         self.pid_block = pid_block
+        self.consigne_block = consigne_block
+        if pre_script is not None:  
+            self.pre_script = pre_script
         self.consigne_block = consigne_block
         if pre_script is not None:  
             self.pre_script = pre_script
@@ -19,6 +23,10 @@ class SimulinkInstance:
         # Connection au moteur MATLAB
         self.eng = matlab.engine.start_matlab()
         print(f"MATLAB Engine démarré. Chargement du modèle {self.sim_name}.slx...")
+
+        if pre_script is not None:
+            self.eng.run(self.pre_script, nargout=0)
+            print(f"Script préliminaire {self.pre_script} exécuté.")
 
         if pre_script is not None:
             self.eng.run(self.pre_script, nargout=0)
@@ -36,6 +44,9 @@ class SimulinkInstance:
         self.eng.set_param(self.sim_name, 'StopTime', 'inf', nargout=0) # Simulation infinie
 
 
+        # self.eng.set_param(self.sim_name, 'SolverType', 'Fixed-step', nargout=0)
+        # self.eng.set_param(self.sim_name, 'Solver', 'ode4', nargout=0)
+        # self.eng.set_param(self.sim_name, 'FixedStep', str(self.dt_sim), nargout=0)
         # self.eng.set_param(self.sim_name, 'SolverType', 'Fixed-step', nargout=0)
         # self.eng.set_param(self.sim_name, 'Solver', 'ode4', nargout=0)
         # self.eng.set_param(self.sim_name, 'FixedStep', str(self.dt_sim), nargout=0)
@@ -63,6 +74,11 @@ class SimulinkInstance:
         # or 'FinalValue' depending on your Simulink version
         print(f"Consigne mise à jour (After / FinalValue): {consigne}")
     
+    def set_consigne(self, consigne):
+        self.eng.set_param(f"{self.sim_name}/{self.consigne_block}", 'After', str(consigne), nargout=0)
+        # or 'FinalValue' depending on your Simulink version
+        print(f"Consigne mise à jour (After / FinalValue): {consigne}")
+    
     # get observation # (récupère les observations courantes de la simulation) 
     def get_observation(self):
         """
@@ -71,8 +87,12 @@ class SimulinkInstance:
         # use os to read the last line of logs.csv, separated by commas
         if not os.path.exists('logs.csv'):
             return None
+        if not os.path.exists('logs.csv'):
+            return None
         with open('logs.csv', 'r') as f:
             lines = f.readlines()
+            if not lines:
+                return None
             if not lines:
                 return None
             last_line = lines[-1]
@@ -99,6 +119,15 @@ class SimulinkInstance:
         """
         sim_time = float(self.eng.get_param(self.sim_name, 'SimulationTime'))
         return sim_time
+    
+    def reset(self):
+        """
+        Réinitialise la simulation.
+        """
+        self.eng.set_param(self.sim_name, 'SimulationCommand', 'stop', nargout=0)
+        self.eng.set_param(self.sim_name, 'StartTime', '0', nargout=0)
+        self.eng.set_param(self.sim_name, 'StopTime', 'inf', nargout=0)
+        print("Simulation réinitialisée et démarrée.")
     
     def reset(self):
         """
@@ -142,13 +171,18 @@ class Policy:
 
         if self.consigne == 0:
             error_norm = 0.0
+        else:        if self.consigne == 0:
+            error_norm = 0.0
         else:
-            error_norm = error / self.consigne
+                error_norm = error / self.consigne
 
         # Calcul de l'overshoot
 
         overshoot = max(0.0, sortie - self.consigne)
         if self.consigne == 0:  
+            overshoot_norm = 0.0
+        else:
+            if self.consigne == 0:  
             overshoot_norm = 0.0
         else:
             overshoot_norm = overshoot / self.consigne
@@ -474,21 +508,28 @@ class EpisodeLoop:
 
         # On s'assure que la simu est arrêtée
         self.env.eng.set_param(self.env.sim_name, 'SimulationCommand', 'stop', nargout=0)
-        self.env.eng.set_param(self.env.sim_name, 'SimulationCommand', 'update', nargout=0)
-        self.env.eng.set_param(self.env.sim_name, 'FastRestart', 'off', nargout=0)
-
 
         # On remet le temps de départ
         self.env.eng.set_param(self.env.sim_name, 'StartTime', '0', nargout=0)
         self.env.eng.set_param(self.env.sim_name, 'StopTime', 'inf', nargout=0)
 
-        # On lance la simulation en real timem
+        # On lance la simulation en real time
         self.env.eng.set_param(self.env.sim_name, 'SimulationCommand', 'start', nargout=0)
+        print("Simulation Simulink démarrée.")
+
         print("Simulation Simulink démarrée.")
 
         for step in range(self.max_steps):
             # Récupérer l'observation actuelle et le temps de simulation
             observation, info = self.env.step()
+            if observation is None:
+                print("Aucune observation reçue, premier pas de simulation en cours...")
+                continue
+            
+            if observation[0] == 0:
+                print("Consigne nulle détectée")
+                continue
+
             if observation is None:
                 print("Aucune observation reçue, premier pas de simulation en cours...")
                 continue
