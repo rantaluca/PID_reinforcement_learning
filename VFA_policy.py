@@ -79,8 +79,6 @@ class RLSTDPolicy(lib.Policy):
 
         consigne, error, command, output = observation
 
-        error_square = error ** 2
-
         ## Calcul des features pour la VFA (phi)
 
         #1 Le biais vaut 1
@@ -96,7 +94,10 @@ class RLSTDPolicy(lib.Policy):
 
         #3 Calcul de l'erreur carrée
 
-        error_norm_squared = error_square / consigne
+        if consigne == 0:
+            error_norm_squared= 0.0
+        else:
+            error_norm_squared = (error / consigne) **2
 
         #4 Calcul de l'erreur dérivée
 
@@ -340,7 +341,8 @@ class RLSTDPolicy(lib.Policy):
         # Chargement de theta et A
 
         data = np.load(filepath)
-        theta_loaded = data["theta"]
+        theta_sum = np.sum(data["theta"])
+        theta_loaded = data["theta"] / theta_sum
         A_loaded = data["A"]
 
         assert theta_loaded.shape == self.theta.shape

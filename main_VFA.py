@@ -58,7 +58,7 @@ import os
 # policy = RLSTDPolicy(
 #     consigne=None,
 #     consigne_tresh=0.98,
-#     loss_params={'error':0.95, 'dep':40, 'conv':0.05},
+#     loss_params={'error':0.95, 'dep':20, 'conv':0.05},
 #     dt=0.1,
 #     Kp_ref=1.0,
 #     Ki_ref=0.1,
@@ -68,7 +68,7 @@ import os
 #     dKi2=0.005,
 #     Kp_bounds=(0.0, 1.0),
 #     Ki_bounds=(0.0, 1.0),
-#     beta=100,
+#     beta=1,
 #     epsilon=0.1,
 #     gamma=0.99,
 #     Integral_ref=1.0,
@@ -90,7 +90,7 @@ import os
 # )
 
 # try:
-#     N_EPISODES = 20
+#     N_EPISODES = 10
 #     for ep in range(N_EPISODES):
 #         print(f"\n===== PHASE 1 — ÉPISODE {ep+1}/{N_EPISODES} =====")
 #         policy.reset_episode()
@@ -148,7 +148,7 @@ import os
 #     dKi2=0.005,
 #     Kp_bounds=(0.0, 1.0),
 #     Ki_bounds=(0.0, 1.0),
-#     beta=100,
+#     beta=1,
 #     epsilon=0.1,
 #     gamma=0.99,
 #     Integral_ref=1.0,
@@ -159,7 +159,7 @@ import os
 # policy.train_value_function = True 
 # policy.adapt_gains = True          
 # policy.actions_set = 0
-# policy.load_params("RLSTD_params/rlstd_phase1_last.npz")              
+# policy.load_params("RLSTD_params/rlstd_phase1_ep10.npz")              
 
 # episode_loop = ps.EpisodeLoop(
 #     env=instance,
@@ -172,7 +172,7 @@ import os
 # )
 
 # # Planning d'epsilon (simple décroissance linéaire)
-# N_EPISODES = 40
+# N_EPISODES = 10
 # eps_start = 1.0
 # eps_end = 0.1
 
@@ -237,7 +237,7 @@ import os
 # policy = RLSTDPolicy(
 #     consigne=None,
 #     consigne_tresh=0.98,
-#     loss_params={'error':0.95, 'dep':40, 'conv':0.05},
+#     loss_params={'error':0.95, 'dep':20, 'conv':0.05},
 #     dt=0.1,
 #     Kp_ref=1.0,
 #     Ki_ref=0.1,
@@ -247,7 +247,7 @@ import os
 #     dKi2=0.005,
 #     Kp_bounds=(0.0, 1.0),
 #     Ki_bounds=(0.0, 1.0),
-#     beta=100,
+#     beta=1,
 #     epsilon=0.1,
 #     gamma=0.99,
 #     Integral_ref=1.0,
@@ -335,7 +335,7 @@ instance = ps.SimulinkInstance(
 policy = RLSTDPolicy(
     consigne=None,
     consigne_tresh=0.98,
-    loss_params={'error':0.95, 'dep':40, 'conv':0.05},
+    loss_params={'error':0.95, 'dep':20, 'conv':0.05},
     dt=0.1,
     Kp_ref=1.0,
     Ki_ref=0.1,
@@ -345,7 +345,7 @@ policy = RLSTDPolicy(
     dKi2=0.005,
     Kp_bounds=(0.0, 1.0),
     Ki_bounds=(0.0, 1.0),
-    beta=100,
+    beta=1,
     epsilon=0.1,
     gamma=0.99,
     Integral_ref=1.0,
@@ -354,12 +354,13 @@ policy = RLSTDPolicy(
 )
 
 # 🔹 Charger les paramètres appris en phase 3
+
 policy.load_params("RLSTD_params/rlstd_phase3_last.npz")
 
 # --- Configuration Phase 3 (test) ---
 policy.train_value_function = False   # plus de mise à jour RLSTD
-policy.adapt_gains = True            # on applique la politique RL greedy
-policy.actions_set = 1               # set riche de 25 actions
+policy.adapt_gains = True            # on applique la politique RL   greedy
+policy.actions_set = 0           # set riche de 25 actions
 policy.epsilon = 0.0                 # aucune exploration
 
 episode_loop = ps.EpisodeLoop(
@@ -402,8 +403,6 @@ except KeyboardInterrupt:
 
 finally:
     # Sauvegarde des paramètres (facultatif : ils n'ont pas changé en phase 3)
-    os.makedirs("RLSTD_params", exist_ok=True)
-    policy.save_params("RLSTD_params/rlstd_phase3_last.npz")
 
     instance.eng.set_param(instance.sim_name, 'SimulationCommand', 'stop', nargout=0)
     instance.close()
